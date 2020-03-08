@@ -8,4 +8,4 @@ License: GPL-3
 
 Depends: glmnet, stats, doParallel
 
-Built: R 3.5.1;
+Built: R 3.5.1
