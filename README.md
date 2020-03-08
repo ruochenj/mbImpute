@@ -14,9 +14,9 @@ Title: An accurate and robust imputation method for microbiome data
 
 Version: 0.1.0
 
-Author: Ruochen Jiang <ruochenj@gmail.com>
+Author: Ruochen Jiang ( <ruochenj@gmail.com> )
 
-Maintainer: Ruochen Jiang <ruochenj@gmail.com>
+Maintainer: Ruochen Jiang ( <ruochenj@gmail.com> )
 
 Description: An R package corresponding to the paper mbImpute: An accurate and robust imputation method for microbiome data.
 
