@@ -1,3 +1,7 @@
+mbImpute: an accurate and robust imputation method for microbiome data
+================
+Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
+2020-03-09
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -7,17 +11,30 @@
 
 <!-- badges: end -->
 
-The goal of mbImpute is to …
+The goal of mbImpute is to jointly borrow information from similar
+samples, similar taxa and optional metadata including sample covariates,
+and taxon phylogeny.
 
 ## Installation
 
-You can install the released version of mbImpute using:
+If you have downloaded the package zip file, you can install the
+released version of mbImpute using:
 
 ``` r
 install.packages("mbImpute_0.1.0.tar.gz")
 ```
 
+Otherwise, you can use
+
+``` r
+#install.packages("devtools")
+library(devtools)
+install_github("ruochenj/mbImpute/mbImpute R package")
+```
+
 ## Example
+
+We have included a real microbiome data from Karlsson et al (2013).
 
 This is a basic example which shows you how to use mbImpute to perform
 microbiome imputation:
@@ -146,86 +163,22 @@ imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data =
 #> [1] "impute_val generated"
 #> [1]  53 344
 # imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, k =5, parallel = TRUE, ncores = 4)
+imputed_matrix[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112             5.335660075                        5.153952
+#> S118             0.004321374                        4.721291
+#> S121             4.409326544                        5.168918
+
+# If you want to retrieve the count matrix, you can use the following code
+imputed_count_matrix <- floor(10^imputed_matrix - 1.01)
+imputed_count_matrix[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                  216599                          142544
+#> S118                       0                           52635
+#> S121                   25663                          147541
 ```
 
-Visualize the imputation results
-
-``` r
-library(ggplot2)
-# pca plot
-raw_pca_out_full <- prcomp(otu_tab, center = TRUE)
-df1 <- data.frame(raw_pca_out_full$x[,1:2], condition)
-df1$condition <- as.factor(condition)
-ggplot(data = df1, aes(x = PC1, y = PC2, color = condition)) + geom_point(size = 2) +
-  scale_color_manual("condition", values = c("IGT" = "#DA5E03", "T2D" = "#389E78", "control"= "#2166ac"))
-```
-
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
-
-``` r
-
-imp_pca_out_full <- prcomp(imputed_matrix, center = TRUE)
-df2 <- data.frame(imp_pca_out_full$x[,1:2], condition)
-df2$condition <- as.factor(condition)
-ggplot(data = df2, aes(x = PC1, y = PC2, color = condition)) + geom_point(size = 2) +
-  scale_color_manual("condition", values = c("IGT" = "#DA5E03", "T2D" = "#389E78", "control"= "#2166ac"))
-```
-
-<img src="man/figures/README-unnamed-chunk-2-2.png" width="100%" />
-
-``` r
-# The histogram for each taxon after imputation. 
-hist(imputed_matrix[condition == "T2D", 1])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "T2D", 2])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-2.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "T2D", 3])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-3.png" width="100%" />
-
-``` r
-
-hist(imputed_matrix[condition == "control", 1])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-4.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "control", 2])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-5.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "control", 3])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-6.png" width="100%" />
-
-``` r
-
-hist(imputed_matrix[condition == "IGT", 1])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-7.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "IGT", 2])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-8.png" width="100%" />
-
-``` r
-hist(imputed_matrix[condition == "IGT", 3])
-```
-
-<img src="man/figures/README-unnamed-chunk-3-9.png" width="100%" />
+Citation: Karlsson, F. H., Tremaroli, V., Nookaew, I., Bergström, G.,
+Behre, C. J., Fagerberg, B., … & Bäckhed, F. (2013). Gut metagenome in
+European women with normal, impaired and diabetic glucose control.
+Nature, 498(7452), 99-103.
