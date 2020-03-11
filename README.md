@@ -1,7 +1,7 @@
 mbImpute: an accurate and robust imputation method for microbiome data
 ================
 Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
-2020-03-09
+2020-03-10
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -11,20 +11,22 @@ Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
 
 <!-- badges: end -->
 
-The goal of mbImpute is to jointly borrow information from similar
-samples, similar taxa and optional metadata including sample covariates,
-and taxon phylogeny.
+The goal of mbImpute is to impute false zero counts in microbiome
+sequencing data, i.e., a sample-by-taxon count matrix, by jointly
+borrowing information from similar samples, similar taxa and optional
+metadata including sample covariates, and taxon phylogeny.
 
 ## Installation
 
-If you have downloaded the package zip file, you can install the
-released version of mbImpute using:
+After you download the package zip file, you may install the mbImpute
+package (e.g., Version 0.1.0) using the following command in R:
 
 ``` r
 install.packages("mbImpute_0.1.0.tar.gz")
 ```
 
-Otherwise, you can use
+You may also use the following R code to directly install the mbImpute
+package from GitHub:
 
 ``` r
 #install.packages("devtools")
@@ -34,16 +36,18 @@ install_github("ruochenj/mbImpute/mbImpute R package")
 
 ## Example
 
-We have included a real microbiome data from Karlsson et al (2013).
-
-This is a basic example which shows you how to use mbImpute to perform
-microbiome imputation:
+We use the microbiome dataset from Karlsson et al (2013) as an example
+to demonstrate the use of mbImpute:
 
 ``` r
 library(mbImpute)
-library(ggplot2)
-#> Warning: package 'ggplot2' was built under R version 3.5.2
-
+library(glmnet)
+#> Warning: package 'glmnet' was built under R version 3.5.2
+#> Loading required package: Matrix
+#> Warning: package 'Matrix' was built under R version 3.5.2
+#> Loading required package: foreach
+#> Warning: package 'foreach' was built under R version 3.5.2
+#> Loaded glmnet 2.0-18
 # the OTU table
 otu_tab[1:6, 1:6]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
@@ -67,7 +71,7 @@ otu_tab[1:6, 1:6]
 #> S126               148430
 #> S127               210698
 #> S131               450721
-# the taxa distance matrix generated from phylogenetic tree 
+# the taxon phylogenetic distance matrix 
 D[1:6, 1:6]
 #>      [,1] [,2] [,3] [,4] [,5] [,6]
 #> [1,]    0    2    9   10   10    8
@@ -76,7 +80,7 @@ D[1:6, 1:6]
 #> [4,]   10   10    3    0    2    4
 #> [5,]   10   10    3    2    0    4
 #> [6,]    8    8    3    4    4    0
-# a numeric meta data corresponding to the otu table
+# the (optional) meta data, i.e., sample covariate matrix with rows representing samples and corresponding to the rows in otu_tab
 meta_data[1:6, 1:6]
 #>      study_condition      age number_reads triglycerides     hba1c
 #> S112             IGT 1.293993    0.6475183     0.9926486 1.2575721
@@ -92,93 +96,40 @@ meta_data[1:6, 1:6]
 #> S126 2.4895566
 #> S127 3.2116358
 #> S131 1.7351455
-# get the condition from the meta data
+# obtain the sample conditions from the meta data (imputation will be performed within each condition)
 condition = meta_data$study_condition
-cond <- as.numeric(as.factor(condition))
-meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
-meta_data <- meta_data[,-1]
 
-imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, k =5)
-#> [1] "condition IGT is imputed"
-#> [1]  49 344
-#> [1] 0.4181722
-#> [1] "design_mat generated"
-#> [1] 3851
-#> [1] 3934 3851
-#> [1] 3934 3851
-#> [1] 0.7068284
-#> [1] 0.007268951
-#> [1] "the preserved values in zero inflated matrix is: "
-#> [1] 0.2185556
-#> [1]  49 344
-#> [1]  49 344
-#> [1] "the mse for psi "
-#> [1] 2
-#> [1] "is"
-#> [1] 0.7068284
-#> [1] 0.4181548
-#> [1]  49 344
-#> [1] "impute_val generated"
-#> [1]  49 344
-#> [1] "condition control is imputed"
-#> [1]  43 344
-#> [1] 0.4879396
-#> [1] "design_mat generated"
-#> [1] 3079
-#> [1] 3357 3079
-#> [1] 3357 3079
-#> [1] 0.6578296
-#> [1] 0.02175325
-#> [1] "the preserved values in zero inflated matrix is: "
-#> [1] 0.1865
-#> [1]  43 344
-#> [1]  43 344
-#> [1] "the mse for psi "
-#> [1] 2
-#> [1] "is"
-#> [1] 0.6578296
-#> [1] 0.487936
-#> [1]  43 344
-#> [1] "impute_val generated"
-#> [1]  43 344
-#> [1] "condition T2D is imputed"
-#> [1]  53 344
-#> [1] 0.4231258
-#> [1] "design_mat generated"
-#> [1] 4304
-#> [1] 4328 4304
-#> [1] 4328 4304
-#> [1] 0.7480673
-#> [1] 0.008594657
-#> [1] "the preserved values in zero inflated matrix is: "
-#> [1] 0.2404444
-#> [1]  53 344
-#> [1]  53 344
-#> [1] "the mse for psi "
-#> [1] 2
-#> [1] "is"
-#> [1] 0.7480673
-#> [1] 0.4231108
-#> [1]  53 344
-#> [1] "impute_val generated"
-#> [1]  53 344
+# For all the categorical variables, make sure they are converted to numerical.
+meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
+
+# meta_data <- meta_data[,-1]
+
+# run mbImpute
+imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
+#> [1] "condition IGT is imputing"
+#> [1] "Working on it!"
+#> [1] "condition control is imputing"
+#> [1] "Working on it!"
+#> [1] "condition T2D is imputing"
+#> [1] "Working on it!"
+#> [1] "Note: The imputed values are on the logarithmic scale. To convert them into the count scale, please run this command:"
+#> [1] "imputed_count_mat <- 10^(imputed_mat) - 1.01"
+# If you have multiple cores and would like to do parallel computing, please use the following command
 # imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, k =5, parallel = TRUE, ncores = 4)
+# If you do not have meta data, or phylogenetic information, and the samples belong to one condition
+# otu_tab_T2D <- otu_tab[condition == "T2D",]
+# imputed_count_matrix <- mbImpute(otu_tab = otu_tab_T2D)
+# a glance at the imputed matrix
 imputed_matrix[1:3, 1:2]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
 #> S112             5.335660075                        5.153952
 #> S118             0.004321374                        4.721291
 #> S121             4.409326544                        5.168918
-
-# If you want to retrieve the count matrix, you can use the following code
-imputed_count_matrix <- floor(10^imputed_matrix - 1.01)
-imputed_count_matrix[1:3, 1:2]
-#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
-#> S112                  216599                          142544
-#> S118                       0                           52635
-#> S121                   25663                          147541
 ```
 
-Citation: Karlsson, F. H., Tremaroli, V., Nookaew, I., Bergström, G.,
-Behre, C. J., Fagerberg, B., … & Bäckhed, F. (2013). Gut metagenome in
-European women with normal, impaired and diabetic glucose control.
-Nature, 498(7452), 99-103.
+Reference:
+
+Karlsson, F. H., Tremaroli, V., Nookaew, I., Bergström, G., Behre, C.
+J., Fagerberg, B., … & Bäckhed, F. (2013). Gut metagenome in European
+women with normal, impaired and diabetic glucose control. Nature,
+498(7452), 99-103.
