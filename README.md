@@ -1,7 +1,7 @@
 mbImpute: an accurate and robust imputation method for microbiome data
 ================
 Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
-2020-03-10
+2020-03-12
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -105,26 +105,35 @@ meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
 # meta_data <- meta_data[,-1]
 
 # run mbImpute
-imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
+imputed_count_mat_list <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
 #> [1] "condition IGT is imputing"
 #> [1] "Working on it!"
 #> [1] "condition control is imputing"
 #> [1] "Working on it!"
 #> [1] "condition T2D is imputing"
 #> [1] "Working on it!"
-#> [1] "Note: The imputed values are on the logarithmic scale. To convert them into the count scale, please run this command:"
-#> [1] "imputed_count_mat <- 10^(imputed_mat) - 1.01"
+#> [1] "Finished."
 # If you have multiple cores and would like to do parallel computing, please use the following command
 # imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, k =5, parallel = TRUE, ncores = 4)
 # If you do not have meta data, or phylogenetic information, and the samples belong to one condition
 # otu_tab_T2D <- otu_tab[condition == "T2D",]
 # imputed_count_matrix <- mbImpute(otu_tab = otu_tab_T2D)
 # a glance at the imputed matrix
-imputed_matrix[1:3, 1:2]
+# First result is the count matrix at log scale, we recommend to perform downstream analysis on this data as the distribution for the values in each taxon follows approximately normal distribution (see our paper for more results)
+imputed_count_mat_list$imputed_count_mat_lognorm[1:3, 1:2]
+#> NULL
+# Second result is the imputed normalized count matrix with same library size set to 10^6 for each sample (subject/person).
+imputed_count_mat_list$imp_count_mat_norm[1:3, 1:2]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
-#> S112             5.335660075                        5.153952
-#> S118             0.004321374                        4.721291
-#> S121             4.409326544                        5.168918
+#> S112                  216599                          142544
+#> S118                   46804                           52635
+#> S121                   25663                          147541
+# Third result is the imputed count matrix with the same scale as the input count matrix.
+imputed_count_mat_list$imp_count_mat_origlibsize[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                 3954404                         2602397
+#> S118                 1040127                         1169709
+#> S121                  549997                         3162029
 ```
 
 Reference:
