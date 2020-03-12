@@ -200,7 +200,6 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
 
   #keep the original matrix
   y_imp <- y_sim
-  print(dim(y_imp))
   # #keep the vectors that we neither impute nor borrow information
   # remain_vec <- which(unlist(filter) == 0)
   # y_rem <- y_sim[, remain_vec]
@@ -236,7 +235,6 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
     confidence_set <- rbind(confidence_set, cbind(cf_set, rep(i, n_c)))
     impute_set <- rbind(impute_set, cbind(im_set, rep(i, n-n_c)))
   }
-  print(dim(confidence_set)[1]/(dim(confidence_set)[1] + dim(impute_set)[1]))
 
   #find k closest taxa
   # k = 10
@@ -269,7 +267,8 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
     }
   }
   design_mat_fit <- scale(design_mat_fit)
-  print("design_mat generated")
+  print("Working on it!")
+  # print("design_mat generated")
   # print(dim(design_mat_fit))
   design_mat_fit[is.nan(design_mat_fit)] <- 0
 
@@ -290,11 +289,11 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
     penalized_weights <- c(penalized_weights, weights_pen[close_taxa[[j]],j])
   }
   penalized_weights <- c(penalized_weights, rep(1, n*(n-1)), rep(0, n*p))
-  print(length(penalized_weights))
-  print(dim(design_mat_fit))
+  # print(length(penalized_weights))
+  # print(dim(design_mat_fit))
   response <- y_sim[confidence_set]
   set.seed(1)
-  print(dim(design_mat_fit))
+  # print(dim(design_mat_fit))
   if(parallel){
     registerDoParallel(ncores)
     cv.result <- cv.glmnet(x = design_mat_fit, y = response, family = "gaussian", penalty.factor = penalized_weights, intercept = TRUE, parallel = TRUE)
@@ -304,7 +303,7 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
   c1 <- coef(cv.result, s = cv.result$lambda.min)
   mse = min(cv.result$cvm)
   rm(penalized_weights)
-  print(mse)
+  # print(mse)
 
   # print("the imputed dimension is ")
   # print(dim(design_mat_impute))
@@ -315,7 +314,7 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
 
   #deal with design_mat_impute scaling
   design_mat_impute <- cbind(rep(1, dim(design_mat_impute)[1]), scale(design_mat_impute))
-  print(sum(is.nan(design_mat_impute))/(dim(design_mat_impute)[1] * dim(design_mat_impute)[2]))
+  # print(sum(is.nan(design_mat_impute))/(dim(design_mat_impute)[1] * dim(design_mat_impute)[2]))
   design_mat_impute[is.nan(design_mat_impute)] <- 0
   # print(max(design_mat_impute))
   # print(dim(design_mat_impute))
@@ -330,20 +329,20 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
   for(i in 2:dim(impute_set)[1]){
     impute_mat[impute_set[i,1], impute_set[i,2]] = max(imputed_value[i-1], log10(1.01))
   }
-  print("the preserved values in zero inflated matrix is: ")
-  print(sum(y_sim == impute_mat)/(600*30))
-  print(dim(y_imp))
+  #print("the preserved values in zero inflated matrix is: ")
+  #print(sum(y_sim == impute_mat)/(600*30))
+  #print(dim(y_imp))
   y_imp[, filter_vec] = impute_mat
-  print(dim(y_imp))
+  #print(dim(y_imp))
   saveRDS(c1, file = paste0("dat", psi,"_sim_add_filter_coef.rds", collapse = ""))
   saveRDS(y_imp, file = paste0("imputed", psi, "_mat.rds", collapse = ""))
   # print(max(impute_mat))
   # print(min(impute_mat))
-  print("the mse for psi ")
-  print(psi)
-  print("is")
-  print(mse)
-  print(sum(abs(impute_mat - y_sim) < 1e-6)/(m * n))
-  print(dim(y_imp))
+  # print("the mse for psi ")
+  # print(psi)
+  # print("is")
+  # print(mse)
+  # print(sum(abs(impute_mat - y_sim) < 1e-6)/(m * n))
+  # print(dim(y_imp))
   return(list(y_imp = y_imp, mse = mse))
 }
