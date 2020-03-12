@@ -5,7 +5,7 @@
 \title{mbImpute: an accurate and robust imputation method for microbiome data}
 \usage{
 mbImpute(condition = NULL, otu_tab = NULL, meta_data = NULL,
-  D = NULL, psi = 2, k = 10, cross_valid = FALSE,
+  D = NULL, psi = 2, k = 5, cross_valid = FALSE,
   parallel = FALSE, ncores = 1, type_1 = T)
 }
 \arguments{
@@ -34,7 +34,11 @@ will be (required that k <= m).}
 \item{type_1}{A boolean indicating which type of mbImpute to use. Details can be found in the Vignette.}
 }
 \value{
-An imputed and normalized OTU table at log scale. User can rescale it back to counts by using \code{floor(10^(otu_tab) - 1.01)}.
+A list three imputed OTU matrices.
+imp_count_mat_lognorm: imputed normalized and log transformed matrix.
+imp_count_mat_norm : imputed normalized count matrix with library size of each sample equal to 10^6.
+imp_count_mat_origlibsize: imputed countmatrix at the original library size.
+We recommend to use the first one imp_count_mat_lognorm. So that the log scaled counts follows approximately Normal for each taxon across samples.
 }
 \description{
 mbImpute aims to impute likely false zero counts or low counts for a normalized OTU table of dimension n * m. Where n is the number of biological samples and m is the number
