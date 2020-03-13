@@ -18,14 +18,7 @@ metadata including sample covariates, and taxon phylogeny.
 
 ## Installation
 
-After you download the package zip file, you may install the mbImpute
-package (e.g., Version 0.1.0) using the following command in R:
-
-``` r
-install.packages("mbImpute_0.1.0.tar.gz")
-```
-
-You may also use the following R code to directly install the mbImpute
+You can use the following command in R to directly install the mbImpute
 package from GitHub:
 
 ``` r
