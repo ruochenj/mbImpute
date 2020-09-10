@@ -356,13 +356,13 @@ data_fit2 <- function(y_sim, x, D, k, parallel = F, ncores = 1, unnormalized = T
     }
     if(is.vector(X)){
       result <- design_mat_row_gen2_imp(y_sim, X[1:n], impute_set[i,1], impute_set[i,2], close_taxa)
-      impute_mat[impute_set[i,1], impute_set[i,2]] = max(imputed_value[i-1], log10(1.01))
-    }
-    else{
+      impute_mat[impute_set[i,1], impute_set[i,2]] = min(max(y_sim[,impute_set[i,2]]), max(c(1, result) %*% c1, log10(1.01)))
+    }else{
       result <- design_mat_row_gen2_imp(y_sim, X[1:n,], impute_set[i,1], impute_set[i,2], close_taxa)
-      impute_mat[impute_set[i,1], impute_set[i,2]] <- max(c(1, result) %*% c1, log10(1.01))
+      impute_mat[impute_set[i,1], impute_set[i,2]] <- min(max(y_sim[,impute_set[i,2]]), max(c(1, result) %*% c1, log10(1.01)))
     }
   }
+
   #print("the preserved values in zero inflated matrix is: ")
   #print(sum(y_sim == impute_mat)/(600*30))
   #print(dim(y_imp))

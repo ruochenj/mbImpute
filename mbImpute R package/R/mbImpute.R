@@ -61,7 +61,7 @@ mbImpute <- function(condition = NULL, otu_tab = NULL, meta_data = NULL, D = NUL
   }
   if(unnormalized){
     scale <- rowSums(otu_tab) / (10^6)
-    otu_tab <- otu_tab / rowSums(otu_tab) * 10^6
+    otu_tab <- otu_tab / scale
     otu_tab <- log10(otu_tab + 1.01)
   }
   cond_set <- unique(condition)
