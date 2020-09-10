@@ -1,7 +1,7 @@
 mbImpute: an accurate and robust imputation method for microbiome data
 ================
 Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
-2020-03-12
+2020-03-14
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -14,22 +14,22 @@ Ruochen Jiang, Wei Vivian Li, and Jingyi Jessica Li
 The goal of mbImpute is to impute false zero counts in microbiome
 sequencing data, i.e., a sample-by-taxon count matrix, by jointly
 borrowing information from similar samples, similar taxa and optional
-metadata including sample covariates, and taxon phylogeny.
+metadata including sample covariates and taxon phylogeny.
 
 ## Installation
 
-After you download the package zip file, you may install the mbImpute
-package (e.g., Version 0.1.0) using the following command in R:
+Please install the following R packages first.
 
 ``` r
-install.packages("mbImpute_0.1.0.tar.gz")
+install.pacakges("glmnet")
+install.packages("devtools")
+install.packages("Matrix")
 ```
 
-You may also use the following R code to directly install the mbImpute
-package from GitHub:
+Then you can use the following R command to directly install the
+mbImpute package from GitHub:
 
 ``` r
-#install.packages("devtools")
 library(devtools)
 install_github("ruochenj/mbImpute/mbImpute R package")
 ```
@@ -40,15 +40,14 @@ We use the microbiome dataset from Karlsson et al (2013) as an example
 to demonstrate the use of mbImpute:
 
 ``` r
+# Load the R packages
 library(mbImpute)
 library(glmnet)
-#> Warning: package 'glmnet' was built under R version 3.5.2
 #> Loading required package: Matrix
-#> Warning: package 'Matrix' was built under R version 3.5.2
 #> Loading required package: foreach
-#> Warning: package 'foreach' was built under R version 3.5.2
 #> Loaded glmnet 2.0-18
-# the OTU table
+
+# Display part of the OTU table
 otu_tab[1:6, 1:6]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
 #> S112                 3954419                         2602398
@@ -71,7 +70,8 @@ otu_tab[1:6, 1:6]
 #> S126               148430
 #> S127               210698
 #> S131               450721
-# the taxon phylogenetic distance matrix 
+
+# Display part of the taxon phylogenetic distance matrix, whose rows and columns correspond to the columns in otu_tab 
 D[1:6, 1:6]
 #>      [,1] [,2] [,3] [,4] [,5] [,6]
 #> [1,]    0    2    9   10   10    8
@@ -80,7 +80,8 @@ D[1:6, 1:6]
 #> [4,]   10   10    3    0    2    4
 #> [5,]   10   10    3    2    0    4
 #> [6,]    8    8    3    4    4    0
-# the (optional) meta data, i.e., sample covariate matrix with rows representing samples and corresponding to the rows in otu_tab
+
+# Display part of the (optional) meta data, i.e., the sample covariate matrix with rows representing samples and corresponding to the rows in otu_tab
 meta_data[1:6, 1:6]
 #>      study_condition      age number_reads triglycerides     hba1c
 #> S112             IGT 1.293993    0.6475183     0.9926486 1.2575721
@@ -96,39 +97,90 @@ meta_data[1:6, 1:6]
 #> S126 2.4895566
 #> S127 3.2116358
 #> S131 1.7351455
-# obtain the sample conditions from the meta data (imputation will be performed within each condition)
-condition = meta_data$study_condition
-
-# For all the categorical variables, make sure they are converted to numerical.
+# For all the categorical variables (columns) in meta_data, make sure they are converted to numerical variables. For example,
 meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
 
-# meta_data <- meta_data[,-1]
-
-# run mbImpute
-imputed_count_mat_list <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
-#> [1] "condition IGT is imputing"
+# Demo 1: run mbImpute (imputation will be performed within each condition) on a single core
+imputed_count_mat_list <- mbImpute(condition = meta_data$study_condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
+#> [1] "condition 2 is imputing"
 #> [1] "Working on it!"
-#> [1] "condition control is imputing"
+#> [1] "condition 1 is imputing"
 #> [1] "Working on it!"
-#> [1] "condition T2D is imputing"
+#> [1] "condition 3 is imputing"
 #> [1] "Working on it!"
 #> [1] "Finished."
-# If you have multiple cores and would like to do parallel computing, please use the following command
-# imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, k =5, parallel = TRUE, ncores = 4)
-# If you do not have meta data, or phylogenetic information, and the samples belong to one condition
-# otu_tab_T2D <- otu_tab[condition == "T2D",]
-# imputed_count_matrix <- mbImpute(otu_tab = otu_tab_T2D)
-# a glance at the imputed matrix
-# First result is the count matrix at log scale, we recommend to perform downstream analysis on this data as the distribution for the values in each taxon follows approximately normal distribution (see our paper for more results)
-imputed_count_mat_list$imputed_count_mat_lognorm[1:3, 1:2]
-#> NULL
-# Second result is the imputed normalized count matrix with same library size set to 10^6 for each sample (subject/person).
+
+# A glance at the imputed result, which includes three matrices
+## The first is an imputed matrix on the log10 scale; we recommend users to perform downstream analysis based on normal distributions on this data, whose values in each taxon (column) follows an approximate normal distribution (see our paper for detail)
+imputed_count_mat_list$imp_count_mat_lognorm[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                5.335660                        5.153952
+#> S118                4.670297                        4.721291
+#> S121                4.409327                        5.168918
+## The second is an imputed normalized count matrix, where each sample (row) is set to have the same total of a million reads
 imputed_count_mat_list$imp_count_mat_norm[1:3, 1:2]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
 #> S112                  216599                          142544
 #> S118                   46804                           52635
 #> S121                   25663                          147541
-# Third result is the imputed count matrix with the same scale as the input count matrix.
+## The third is an imputed count matrix on the original scale, with each sample (row) having the read count same as that in the original otu_tab
+imputed_count_mat_list$imp_count_mat_origlibsize[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                 3954404                         2602397
+#> S118                 1040127                         1169709
+#> S121                  549997                         3162029
+
+# Demo 2: if you have multiple (e.g., 4) cores and would like to do parallel computing
+imputed_count_mat_list <- mbImpute(condition = meta_data$study_condition, otu_tab = otu_tab, meta_data = meta_data, D = D, parallel = TRUE, ncores = 4)
+#> [1] "condition 2 is imputing"
+#> [1] "Working on it!"
+#> [1] "condition 1 is imputing"
+#> [1] "Working on it!"
+#> [1] "condition 3 is imputing"
+#> [1] "Working on it!"
+#> [1] "Finished."
+
+# A glance at the imputed result, which includes three matrices
+## The first is an imputed matrix on the log10 scale; we recommend users to perform downstream analysis based on normal distributions on this data, whose values in each taxon (column) follows an approximate normal distribution (see our paper for detail)
+imputed_count_mat_list$imp_count_mat_lognorm[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                5.335660                        5.153952
+#> S118                4.670297                        4.721291
+#> S121                4.409327                        5.168918
+## The second is an imputed normalized count matrix, where each sample (row) is set to have the same total of a million reads
+imputed_count_mat_list$imp_count_mat_norm[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                  216599                          142544
+#> S118                   46804                           52635
+#> S121                   25663                          147541
+## The third is an imputed count matrix on the original scale, with each sample (row) having the read count same as that in the original otu_tab
+imputed_count_mat_list$imp_count_mat_origlibsize[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                 3954404                         2602397
+#> S118                 1040127                         1169709
+#> S121                  549997                         3162029
+
+# Demo 3: if you do not have meta data or phylogenetic information, and the samples belong to one condition
+otu_tab_T2D <- otu_tab[meta_data$study_condition == "T2D",]
+imputed_count_matrix_list <- mbImpute(otu_tab = otu_tab_T2D)
+#> [1] "Meta data information unavailable"
+#> [1] "Phylogenentic information unavailable"
+#> [1] "Finished."
+
+# A glance at the imputed result, which includes three matrices
+## The first is an imputed matrix on the log10 scale; we recommend users to perform downstream analysis based on normal distributions on this data, whose values in each taxon (column) follows an approximate normal distribution (see our paper for detail)
+imputed_count_mat_list$imp_count_mat_lognorm[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                5.335660                        5.153952
+#> S118                4.670297                        4.721291
+#> S121                4.409327                        5.168918
+## The second is an imputed normalized count matrix, where each sample (row) is set to have the same total of a million reads
+imputed_count_mat_list$imp_count_mat_norm[1:3, 1:2]
+#>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
+#> S112                  216599                          142544
+#> S118                   46804                           52635
+#> S121                   25663                          147541
+## The third is an imputed count matrix on the original scale, with each sample (row) having the read count same as that in the original otu_tab
 imputed_count_mat_list$imp_count_mat_origlibsize[1:3, 1:2]
 #>      s__Clostridium_sp_L2_50 s__Faecalibacterium_prausnitzii
 #> S112                 3954404                         2602397
