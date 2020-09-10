@@ -4,11 +4,13 @@
 \name{D}
 \alias{D}
 \title{Distance matrix for each pair of taxa}
-\format{A matrix containing 344 rows and 344 columns.
+\format{
+A matrix containing 344 rows and 344 columns.
 \describe{
 \item{x}{1}
 \item{y}{2}
-}}
+}
+}
 \usage{
 D
 }

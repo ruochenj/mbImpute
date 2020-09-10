@@ -4,9 +4,16 @@
 \alias{mbImpute}
 \title{mbImpute: an accurate and robust imputation method for microbiome data}
 \usage{
-mbImpute(condition = NULL, otu_tab = NULL, meta_data = NULL,
-  D = NULL, psi = 2, k = 5, cross_valid = FALSE,
-  parallel = FALSE, ncores = 1, type_1 = T)
+mbImpute(
+  condition = NULL,
+  otu_tab = NULL,
+  meta_data = NULL,
+  D = NULL,
+  k = 5,
+  parallel = FALSE,
+  ncores = 1,
+  unnormalized = T
+)
 }
 \arguments{
 \item{condition}{A vector of length n indicating which group (e.g. treatment/control, CRC/control/Adenoma) the biology samples belong to.}
@@ -19,19 +26,14 @@ should be excluded from the meta data.}
 \item{D}{A matrix of dimension m * m corresponding to the distance matrix of taxa generated from an edge set. If an edge set is provided, you can use distance_mat function in our
 package to generate the distance matrix D.}
 
-\item{psi}{A scalar corresponding to the importance weight of the taxa distance matrix. This arguement is only useful if cross_valid is FALSE.}
-
 \item{k}{A scalar corresponding to the number of nearest taxa in a phylogenetic tree we will use to impute a missing value. Theoretically, the larger k, the more accurate our imputation
 will be (required that k <= m).}
-
-\item{cross_valid}{A boolean indicating whether we will use cross validation to find the best psi. If cross_valid is TRUE, we use grid search and find the best psi in the set 0.5, 1, 1.5,
-2.}
 
 \item{parallel}{A boolean indicating whether to use parallel or not. Default is FALSE.}
 
 \item{ncores}{A scalar corresponding to the number of cores to use. It is only used when parallel = TRUE. Default is 1.}
 
-\item{type_1}{A boolean indicating which type of mbImpute to use. Details can be found in the Vignette.}
+\item{unnormalized}{A boolean indicating whether the data has been normalized. Details can be found in the Vignette.}
 }
 \value{
 A list three imputed OTU matrices.
