@@ -5,17 +5,17 @@
 #' @param y_sim A matrix of dimension n * m corresponding to the normalized OTU table, with n denoting the number of subjects(patients), and m denoting the number of taxa.
 #' @param x A matrix of dimension n * p corresponding to the meta data matrix, with n denotes the number of subjects(patients), and p denotes the number of covariates (age/BMI/...).
 #' @param D A matrix of dimension m * m corresponding to the taxa distance matrix.
-#' @param psi A scalar corresponding to the importance weight of the taxa distance matrix.
 #' @param k  A scalar corresponding to the number of nearest taxa in a phylogenetic tree we will use to impute a missing value. Theoretically, the larger k, the more accurate our imputation
 #' will be (required that k <= m).
 #' @param parallel A boolean indicating whether to use parallel or not. Default is FALSE.
 #' @param ncores A scalar corresponding to the number of cores to use. It is only used when parallel = TRUE. Default is 1.
-#' @param type_1 A boolean indicates the type of imputation.
+#' @param unnormalized A boolean indicates the whether the input has been normalized.
 #' @import glmnet
 #' @import doParallel
-#' @return A list containing two elements: 1. y_imp: the imputed submatrix 2. mse: the mse calculated based on the values that are not regarded as false values.
+#' @import Matrix
+#' @return y_imp: the imputed matrix
 #'
-data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T){
+data_fit2 <- function(y_sim, x, D, k, parallel = F, ncores = 1, unnormalized = T){
   #loading used functions
   gamma_norm_mix <- function(y, X){
     loglik <- function(p, alpha, beta, cov_par, var1, X, y){
@@ -110,7 +110,7 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
         }
       )
       if(!out){
-        if(type_1){
+        if(unnormalized){
           return(list("d" = y < log10(1.01) + 10^(-3) ))
         }else{
           return(list("d" = rep(1, n)))
@@ -153,6 +153,43 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
     return(list("p" = p_t, "alpha" = alpha_t, "beta" = beta_t, "cov_par" = cov_par_t, "var" = var_t, "d" = a_hat_t, "eta" = eta_hat, "omega" = omega_hat, "Deviance" = Dev))
   }
   design_mat_row_gen2 <- function(count_mat, covariate_mat, row_index, col_index, close_taxa){
+    n = dim(count_mat)[1]
+    m = dim(count_mat)[2]
+    k = length(close_taxa[[1]])
+    if(is.vector(covariate_mat)){
+      p = 1
+      i = row_index
+      j = col_index
+
+      close_taxa_set <- close_taxa[[j]]
+      #generate a row including response and a row of design matrix.
+      # row_gen <- rep(0, m*k + (n-1) * n + n*p)
+      #
+      # row_gen[((j-1)*k+1):(j*k)] = as.numeric(count_mat[i,close_taxa[[j]]])
+      # row_gen[(m*k + (i-1)*(n-1)+1):(k*m + i*(n-1))] = as.numeric(count_mat[-i,j])
+      # row_gen[(m*k + n*(n-1)+ p*(i-1) + 1):(m*k + n*(n-1) + i*p)] = as.numeric(covariate_mat[i])
+
+      non_zero_idx <- c(((j-1)*k+1):(j*k), (m*k + (i-1)*(n-1)+1):(k*m + i*(n-1)),(m*k + n*(n-1)+ p*(i-1) + 1):(m*k + n*(n-1) + i*p) )
+      non_zero_values <- c( as.numeric(count_mat[i,close_taxa[[j]]]), as.numeric(count_mat[-i,j]), as.numeric(covariate_mat[i]))
+    }else{
+      p = dim(covariate_mat)[2]
+      i = row_index
+      j = col_index
+
+      close_taxa_set <- close_taxa[[j]]
+      #generate a row including response and a row of design matrix.
+      # row_gen <- rep(0, m*k + (n-1) * n + n*p)
+      #
+      # row_gen[((j-1)*k+1):(j*k)] = as.numeric(count_mat[i,close_taxa[[j]]])
+      # row_gen[(m*k + (i-1)*(n-1)+1):(k*m + i*(n-1))] = as.numeric(count_mat[-i,j])
+      # row_gen[(m*k + n*(n-1)+ p*(i-1) + 1):(m*k + n*(n-1) + i*p)] = as.numeric(covariate_mat[i,])
+
+      non_zero_idx <- c(((j-1)*k+1):(j*k), (m*k + (i-1)*(n-1)+1):(k*m + i*(n-1)),(m*k + n*(n-1)+ p*(i-1) + 1):(m*k + n*(n-1) + i*p) )
+      non_zero_values <- c( as.numeric(count_mat[i,close_taxa[[j]]]), as.numeric(count_mat[-i,j]), as.numeric(covariate_mat[i,]))
+    }
+    return(list("nz_idx" = non_zero_idx, "nz_val" = non_zero_values))
+  }
+  design_mat_row_gen2_imp <- function(count_mat, covariate_mat, row_index, col_index, close_taxa){
     n = dim(count_mat)[1]
     m = dim(count_mat)[2]
     k = length(close_taxa[[1]])
@@ -258,84 +295,81 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
   }
   #generate a row including response and a row of design matrix.
   row_length <- m * k + (n-1) * n + n*p
-  design_mat_fit <- matrix(0, nrow = dim(confidence_set)[1] - 1, ncol = row_length)
-  for(i in 2:dim(confidence_set)[1]){
-    if(is.vector(x)){
-      design_mat_fit[i-1,] <- design_mat_row_gen2(y_sim, x[1:n], confidence_set[i,1], confidence_set[i,2], close_taxa)
-    }else{
-      design_mat_fit[i-1,] <- design_mat_row_gen2(y_sim, x[1:n,], confidence_set[i,1], confidence_set[i,2], close_taxa)
-    }
-  }
-  design_mat_fit <- scale(design_mat_fit)
-  print("Working on it!")
-  # print("design_mat generated")
-  # print(dim(design_mat_fit))
-  design_mat_fit[is.nan(design_mat_fit)] <- 0
 
-  #generate covariate matrix for values need imputation
-  design_mat_impute <- matrix(0, nrow = dim(impute_set)[1] - 1, ncol = row_length)
-  for(i in 2:dim(impute_set)[1]){
-    if(is.vector(x)){
-      design_mat_impute[i-1,] <- design_mat_row_gen2(y_sim, x[1:n], impute_set[i,1], impute_set[i,2], close_taxa)
+  design_mat_fit <- sparseMatrix(i = 1, j =1, x = 0, dims = c(dim(confidence_set)[1] - 1, row_length))
+  for(i in 2:dim(confidence_set)[1]){
+    if(i %% 10000 == 0){
+      print(i)
+    }
+    if(is.vector(X)){
+      result <- design_mat_row_gen2(y_sim, X[1:n], confidence_set[i,1], confidence_set[i,2], close_taxa)
+      design_mat_fit[i-1,result$nz_idx] <- result$nz_val
     }
     else{
-      design_mat_impute[i-1,] <- design_mat_row_gen2(y_sim, x[1:n,], impute_set[i,1], impute_set[i,2], close_taxa)
+      result <- design_mat_row_gen2(y_sim, X[1:n,], confidence_set[i,1], confidence_set[i,2], close_taxa)
+      design_mat_fit[i-1,result$nz_idx] <- result$nz_val
     }
   }
 
-  weights_pen <- D^psi
-  penalized_weights <- c()
-  for(j in 1:m){
-    penalized_weights <- c(penalized_weights, weights_pen[close_taxa[[j]],j])
-  }
-  penalized_weights <- c(penalized_weights, rep(1, n*(n-1)), rep(0, n*p))
-  # print(length(penalized_weights))
-  # print(dim(design_mat_fit))
-  response <- y_sim[confidence_set]
-  set.seed(1)
-  # print(dim(design_mat_fit))
-  if(parallel){
-    registerDoParallel(ncores)
-    cv.result <- cv.glmnet(x = design_mat_fit, y = response, family = "gaussian", penalty.factor = penalized_weights, intercept = TRUE, parallel = TRUE)
-  }else{
-    cv.result <- cv.glmnet(x = design_mat_fit, y = response, family = "gaussian", penalty.factor = penalized_weights, intercept = TRUE)
-  }
-  c1 <- coef(cv.result, s = cv.result$lambda.min)
-  mse = min(cv.result$cvm)
-  rm(penalized_weights)
-  # print(mse)
-
-  # print("the imputed dimension is ")
-  # print(dim(design_mat_impute))
-  # print("the max of impute matrix is ")
-  # print(max(design_mat_impute))
-  # print("the length of c1 is ")
-  # print(length(c1))
-
-  #deal with design_mat_impute scaling
-  design_mat_impute <- cbind(rep(1, dim(design_mat_impute)[1]), scale(design_mat_impute))
-  # print(sum(is.nan(design_mat_impute))/(dim(design_mat_impute)[1] * dim(design_mat_impute)[2]))
-  design_mat_impute[is.nan(design_mat_impute)] <- 0
-  # print(max(design_mat_impute))
-  # print(dim(design_mat_impute))
-
-  #imputed_value <- cbind(rep(1, dim(design_mat_impute)[1]), scale(design_mat_impute)) %*% c1
-  imputed_value <- design_mat_impute %*% c1
-  ##make sure there's no NA##
-  #print(head(imputed_value, 100))
-  #print("nan in imputed value will be")
-  # print(sum(is.nan(imputed_value)))
-  impute_mat <- y_sim
+  #generate covariate matrix for values need imputation
+  design_mat_impute <- sparseMatrix(i = 1, j =1, x = 0, dims = c(dim(impute_set)[1] - 1, row_length))
   for(i in 2:dim(impute_set)[1]){
-    impute_mat[impute_set[i,1], impute_set[i,2]] = max(imputed_value[i-1], log10(1.01))
+    if(i %% 10000 == 0){
+      print(i)
+    }
+    if(is.vector(X)){
+      result <- design_mat_row_gen2(y_sim, X[1:n], impute_set[i,1], impute_set[i,2], close_taxa)
+      design_mat_impute[i-1,result$nz_idx] <- result$nz_val
+    }
+    else{
+      result <- design_mat_row_gen2(y_sim, X[1:n,], impute_set[i,1], impute_set[i,2], close_taxa)
+      design_mat_impute[i-1,result$nz_idx] <- result$nz_val
+    }
+  }
+
+  mse <- rep(5,4)
+  psi <- c(0.1, 0.5, 1, 2)
+  c1 <- list()
+  for(i in 1:4){
+    weights_pen <- D^psi[i]
+    penalized_weights <- c()
+    for(j in 1:m){
+      penalized_weights <- c(penalized_weights, weights_pen[close_taxa[[j]],j])
+    }
+    #penalized_weights <- c(penalized_weights, rep(1, n*(n-1)), rep(c(0, rep(1, p-1)), n))
+    penalized_weights <- c(penalized_weights, rep(1, n*(n-1)), rep(1, n*p))
+    #print(length(penalized_weights))
+    #print(dim(design_mat_fit))
+    response <- y_sim[confidence_set]
+    set.seed(1)
+    print(dim(design_mat_fit))
+    cv.result <- cv.glmnet(x = design_mat_fit, y = response, family = "gaussian", penalty.factor = penalized_weights, intercept = TRUE)
+    c1[[i]] <- coef(cv.result, s = cv.result$lambda.min)
+    mse[i] = min(cv.result$cvm)
+    print(mse)
+  }
+  c1 <- c1[[which.min(mse)]]
+  impute_mat = y_imp[, filter_vec]
+  for(i in 2:dim(impute_set)[1]){
+    if(i %% 10000 == 0){
+      print(i)
+    }
+    if(is.vector(X)){
+      result <- design_mat_row_gen2_imp(y_sim, X[1:n], impute_set[i,1], impute_set[i,2], close_taxa)
+      impute_mat[impute_set[i,1], impute_set[i,2]] = max(imputed_value[i-1], log10(1.01))
+    }
+    else{
+      result <- design_mat_row_gen2_imp(y_sim, X[1:n,], impute_set[i,1], impute_set[i,2], close_taxa)
+      impute_mat[impute_set[i,1], impute_set[i,2]] <- max(c(1, result) %*% c1, log10(1.01))
+    }
   }
   #print("the preserved values in zero inflated matrix is: ")
   #print(sum(y_sim == impute_mat)/(600*30))
   #print(dim(y_imp))
   y_imp[, filter_vec] = impute_mat
   #print(dim(y_imp))
-  saveRDS(c1, file = paste0("dat", psi,"_sim_add_filter_coef.rds", collapse = ""))
-  saveRDS(y_imp, file = paste0("imputed", psi, "_mat.rds", collapse = ""))
+  saveRDS(c1, file = "dat_sim_add_filter_coef.rds")
+  saveRDS(y_imp, file = "imputed_mat.rds")
   # print(max(impute_mat))
   # print(min(impute_mat))
   # print("the mse for psi ")
@@ -344,5 +378,5 @@ data_fit2 <- function(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
   # print(mse)
   # print(sum(abs(impute_mat - y_sim) < 1e-6)/(m * n))
   # print(dim(y_imp))
-  return(list(y_imp = y_imp, mse = mse))
+  return(y_imp)
 }
