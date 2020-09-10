@@ -12,13 +12,15 @@ cond <- as.numeric(as.factor(condition))
 meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
 meta_data <- meta_data[,-1]
 
+imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)
+
 imputed_count_mat_lognorm <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D)$imp_count_mat_lognorm
 # imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, parallel = TRUE, ncores = 4)
 
 ## ---- fig.align = "center", out.width='\\textwidth', fig.height = 8, fig.width = 8----
 library(ggplot2)
 # pca plot
-raw_pca_out_full <- prcomp(otu_tab, center = TRUE)
+raw_pca_out_full <- prcomp(log10(otu_tab+1.01), center = TRUE)
 df1 <- data.frame(raw_pca_out_full$x[,1:2], condition)
 df1$condition <- as.factor(condition)
 ggplot(data = df1, aes(x = PC1, y = PC2, color = condition)) + geom_point(size = 2) +
