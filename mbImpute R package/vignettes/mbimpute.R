@@ -1,4 +1,4 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(mbImpute)
 # the OTU table
 otu_tab[1:6, 1:6]
@@ -7,7 +7,7 @@ D[1:6, 1:6]
 # a numeric meta data corresponding to the otu table
 meta_data[1:6, 1:6]
 # get the condition from the meta data
-condition = meta_data$study_condition
+condition <- meta_data$study_condition
 cond <- as.numeric(as.factor(condition))
 meta_data[,1] <- as.numeric(as.factor(meta_data[,1]))
 meta_data <- meta_data[,-1]
