@@ -4,7 +4,7 @@
 \alias{data_fit2}
 \title{data_fit2}
 \usage{
-data_fit2(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
+data_fit2(y_sim, x, D, k, parallel = F, ncores = 1, unnormalized = T)
 }
 \arguments{
 \item{y_sim}{A matrix of dimension n * m corresponding to the normalized OTU table, with n denoting the number of subjects(patients), and m denoting the number of taxa.}
@@ -13,8 +13,6 @@ data_fit2(y_sim, x, D, psi, k, parallel = F, ncores = 1, type_1 = T)
 
 \item{D}{A matrix of dimension m * m corresponding to the taxa distance matrix.}
 
-\item{psi}{A scalar corresponding to the importance weight of the taxa distance matrix.}
-
 \item{k}{A scalar corresponding to the number of nearest taxa in a phylogenetic tree we will use to impute a missing value. Theoretically, the larger k, the more accurate our imputation
 will be (required that k <= m).}
 
@@ -22,10 +20,10 @@ will be (required that k <= m).}
 
 \item{ncores}{A scalar corresponding to the number of cores to use. It is only used when parallel = TRUE. Default is 1.}
 
-\item{type_1}{A boolean indicates the type of imputation.}
+\item{unnormalized}{A boolean indicates the whether the input has been normalized.}
 }
 \value{
-A list containing two elements: 1. y_imp: the imputed submatrix 2. mse: the mse calculated based on the values that are not regarded as false values.
+y_imp: the imputed matrix
 }
 \description{
 data_fit2 is a function that aims to perform one imputation in a group of biological samples, it's a subfunction of mbImpute and intend not to be

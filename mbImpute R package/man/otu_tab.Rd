@@ -4,11 +4,13 @@
 \name{otu_tab}
 \alias{otu_tab}
 \title{OTU table for Karlsson et al.}
-\format{A data frame containing 145 rows and 12 columns, the first column indicates the condition we are interested in.
+\format{
+A data frame containing 145 rows and 12 columns, the first column indicates the condition we are interested in.
 \describe{
 \item{x}{1}
 \item{y}{2}
-}}
+}
+}
 \usage{
 otu_tab
 }

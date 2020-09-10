@@ -4,7 +4,8 @@
 \name{meta_data}
 \alias{meta_data}
 \title{covariates information for Karlsson et al.}
-\format{A data frame containing 145 rows and 12 columns, the first column indicates the condition we are interested in.
+\format{
+A data frame containing 145 rows and 12 columns, the first column indicates the condition we are interested in.
 \describe{
 \item{study_condition}{1}
 \item{age}{2}
@@ -18,7 +19,8 @@
 \item{adiponectin}{2}
 \item{hscrp}{2}
 \item{leptin}{2}
-}}
+}
+}
 \usage{
 meta_data
 }
