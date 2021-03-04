@@ -21,7 +21,7 @@ metadata including sample covariates and taxon phylogeny.
 Please install the following R packages first.
 
 ``` r
-install.pacakges("glmnet")
+install.packages("glmnet")
 install.packages("devtools")
 ```
 
