@@ -7,7 +7,7 @@
 mbImpute(
   condition = NULL,
   otu_tab = NULL,
-  meta_data = NULL,
+  metadata = NULL,
   D = NULL,
   k = 5,
   parallel = FALSE,
@@ -20,7 +20,7 @@ mbImpute(
 
 \item{otu_tab}{A matrix of dimension n * m corresponding to OTU count table.}
 
-\item{meta_data}{A matrix of dimension n * p corresponding to the covariate matrix/meta data comes with the biological sample. Please note that the conditions/groups of the samples
+\item{metadata}{A matrix of dimension n * p corresponding to the covariate matrix/meta data comes with the biological sample. Please note that the conditions/groups of the samples
 should be excluded from the meta data.}
 
 \item{D}{A matrix of dimension m * m corresponding to the distance matrix of taxa generated from an edge set. If an edge set is provided, you can use distance_mat function in our

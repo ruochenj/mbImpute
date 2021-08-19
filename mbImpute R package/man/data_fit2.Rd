@@ -4,12 +4,12 @@
 \alias{data_fit2}
 \title{data_fit2}
 \usage{
-data_fit2(y_sim, x, D, k, parallel = F, ncores = 1)
+data_fit2(y_sim, metadata, D, k, parallel = F, ncores = 1)
 }
 \arguments{
 \item{y_sim}{A matrix of dimension n * m corresponding to the normalized OTU table, with n denoting the number of subjects(patients), and m denoting the number of taxa.}
 
-\item{x}{A matrix of dimension n * p corresponding to the meta data matrix, with n denotes the number of subjects(patients), and p denotes the number of covariates (age/BMI/...).}
+\item{metadata}{A matrix of dimension n * p corresponding to the meta data matrix, with n denotes the number of subjects(patients), and p denotes the number of covariates (age/BMI/...).}
 
 \item{D}{A matrix of dimension m * m corresponding to the taxa distance matrix.}
 
