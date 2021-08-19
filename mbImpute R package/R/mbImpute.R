@@ -5,7 +5,7 @@
 #' mbImpute function will ouput an imputed matrix of dimension n * m, which is exactly the same dimension as the input.
 #' @param condition A vector of length n indicating which group (e.g. treatment/control, CRC/control/Adenoma) the biology samples belong to.
 #' @param otu_tab A matrix of dimension n * m corresponding to OTU count table.
-#' @param meta_data A matrix of dimension n * p corresponding to the covariate matrix/meta data comes with the biological sample. Please note that the conditions/groups of the samples
+#' @param metadata A matrix of dimension n * p corresponding to the covariate matrix/meta data comes with the biological sample. Please note that the conditions/groups of the samples
 #' should be excluded from the meta data.
 #' @param D A matrix of dimension m * m corresponding to the distance matrix of taxa generated from an edge set. If an edge set is provided, you can use distance_mat function in our
 #' package to generate the distance matrix D.
@@ -20,7 +20,7 @@
 #' imp_count_mat_origlibsize: imputed countmatrix at the original library size.
 #' We recommend to use the first one imp_count_mat_lognorm. So that the log scaled counts follows approximately Normal for each taxon across samples.
 #' @export
-mbImpute <- function(condition = NULL, otu_tab = NULL, meta_data = NULL, D = NULL, k = 5, parallel = FALSE, ncores = 1, unnormalized = T){
+mbImpute <- function(condition = NULL, otu_tab = NULL, metadata = NULL, D = NULL, k = 5, parallel = FALSE, ncores = 1, unnormalized = T){
   #separate the samples of the dataset into different conditions
   #process the otu_table
   set.seed(1)
@@ -31,30 +31,30 @@ mbImpute <- function(condition = NULL, otu_tab = NULL, meta_data = NULL, D = NUL
   if(is.null(condition)){
     condition = rep(1, dim(otu_tab)[1])
   }
-  if(is.null(meta_data)){
+  if(is.null(metadata)){
     print("Meta data information unavailable")
-    meta_data <- cbind(rnorm(dim(otu_tab)[1]), rnorm(dim(otu_tab)[1]))
+    metadata <- cbind(rnorm(dim(otu_tab)[1]), rnorm(dim(otu_tab)[1]))
   }else{
     cond <- as.numeric(as.factor(condition))
-    meta_data <- as.data.frame(unclass(meta_data))
-    dm <- data.matrix(meta_data)
+    metadata <- as.data.frame(unclass(metadata))
+    dm <- data.matrix(metadata)
     dm <- apply(dm, 2, FUN = function(x){
       x <- as.numeric(x)
     })
     na_idx <- which(is.na(dm), arr.ind = TRUE)
     if(length(unique(na_idx[,2])) != 0){
-      meta_data <- meta_data[,-unique(na_idx[,2])]
+      metadata <- metadata[,-unique(na_idx[,2])]
     }
-    meta_data <- apply(dm, 2, FUN = function(x){
+    metadata <- apply(dm, 2, FUN = function(x){
       (x - min(x))/sd(x)
     })
-    if(dim(meta_data)[2] == 0){
+    if(dim(metadata)[2] == 0){
       print("too many NA's in Meta data")
-      meta_data <- cbind(rnorm(dim(otu_tab)[1]), rnorm(dim(otu_tab)[1]))
+      metadata <- cbind(rnorm(dim(otu_tab)[1]), rnorm(dim(otu_tab)[1]))
     }
     cond_check <- cor(dm, cond)
     if(length(which(cond_check == 1)) != 0){
-      meta_data <- meta_data[,-which(cond_check == 1)]
+      metadata <- metadata[,-which(cond_check == 1)]
     }
 
   }
@@ -70,7 +70,7 @@ mbImpute <- function(condition = NULL, otu_tab = NULL, meta_data = NULL, D = NUL
   }else{
     otu_tab[otu_tab == 0] = log10(1.01)
   }
-  otu_tab = data_fit2(otu_tab, meta_data, D, k = k)
+  otu_tab = data_fit2(otu_tab, metadata, D, k = k)
   print("Finished.")
   imp_count_mat_norm <- floor(10^(otu_tab) - 1.01)
   return(list(imp_count_mat_lognorm = otu_tab, imp_count_mat_norm = imp_count_mat_norm, imp_count_mat_origlibsize = floor(imp_count_mat_norm * scale)) )

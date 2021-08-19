@@ -3,7 +3,7 @@
 #' @description data_fit2 is a function that aims to perform one imputation in a group of biological samples, it's a subfunction of mbImpute and intend not to be
 #' used by the user.
 #' @param y_sim A matrix of dimension n * m corresponding to the normalized OTU table, with n denoting the number of subjects(patients), and m denoting the number of taxa.
-#' @param x A matrix of dimension n * p corresponding to the meta data matrix, with n denotes the number of subjects(patients), and p denotes the number of covariates (age/BMI/...).
+#' @param metadata A matrix of dimension n * p corresponding to the meta data matrix, with n denotes the number of subjects(patients), and p denotes the number of covariates (age/BMI/...).
 #' @param D A matrix of dimension m * m corresponding to the taxa distance matrix.
 #' @param k  A scalar corresponding to the number of nearest taxa in a phylogenetic tree we will use to impute a missing value. Theoretically, the larger k, the more accurate our imputation
 #' will be (required that k <= m).
@@ -14,7 +14,7 @@
 #' @import Matrix
 #' @return y_imp: the imputed matrix
 #'
-data_fit2 <- function(y_sim, x, D, k, parallel = F, ncores = 1){
+data_fit2 <- function(y_sim, metadata, D, k, parallel = F, ncores = 1){
   #loading used functions
   gamma_norm_mix <- function(y, X){
     loglik <- function(p, alpha, beta, cov_par, var1, X, y){
@@ -246,7 +246,7 @@ data_fit2 <- function(y_sim, x, D, k, parallel = F, ncores = 1){
   n = dim(y_sim)[1]
 
   #x[1:50,]
-  X <- cbind(rep(1,n), meta_data[1:n,])
+  X <- cbind(rep(1,n), metadata[1:n,])
   X <- as.matrix(X)
 
   #identifying the group needs imputation and group doesn't need imputation
