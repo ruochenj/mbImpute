@@ -9,9 +9,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-MBImpute is an R package corresponding to the Paper $\textit{MBImpute: An accurate and robust imputation method for microbiome data}$. 
+mbImpute is an R package corresponding to the Paper $\textit{MBImpute: An accurate and robust imputation method for microbiome data}$. 
 
-An example of real data to illustrate the usage of MBImpute.
+An example of real data to illustrate the usage of mbImpute.
 
 ```{r}
 library(mbImpute)
@@ -30,7 +30,7 @@ meta_data <- meta_data[,-1]
 imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, metadata = meta_data, D = D)
 
 imputed_count_mat_lognorm <- imputed_matrix$imp_count_mat_lognorm
-# imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, metadata = meta_data, D = D, parallel = TRUE, ncores = 4)
+# imputed_matrix <- mbImpute(condition = condition, otu_tab = otu_tab, meta_data = meta_data, D = D, parallel = TRUE, ncores = 4)
 ```
 
 ```{r, fig.align = "center", out.width='\\textwidth', fig.height = 8, fig.width = 8}
